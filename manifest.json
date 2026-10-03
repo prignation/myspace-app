@@ -1,0 +1,12 @@
+
+{
+  "name": "MySpace - Notes & Tasks",
+  "short_name": "MySpace",
+  "description": "A calmer way to get things done.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f7f7fc",
+  "theme_color": "#6c5ce7"
+}
