@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#7565e8">
+<title>MySpace — Notes & Tasks</title>
+<style>
+:root {
+  --bg:#f7f6fc;--card:#fff;--text:#29243f;
+  --muted:#9692a5;--primary:#7565e8;--border:#efedf4;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.app{max-width:680px;margin:auto;padding:22px 18px 100px}
+header{display:flex;justify-content:space-between;align-items:center;margin:12px 0 25px}
+.brand{font-size:26px;font-weight:800;letter-spacing:-1px}
+.subtitle{color:var(--muted);font-size:13px;margin-top:5px}
+.avatar{width:42px;height:42px;border-radius:15px;background:#e7e3ff;
+display:grid;place-items:center;color:#6755d4;font-weight:800}
+.tabs{display:flex;background:#eceaf3;padding:4px;border-radius:14px;margin-bottom:16px}
+.tab{flex:1;border:0;background:transparent;padding:12px;border-radius:11px;color:#8d899d;font-weight:600}
+.tab.active{background:white;color:#4c3db1;box-shadow:0 1px 4px #0000000b}
+.search{width:100%;border:1px solid var(--border);border-radius:13px;padding:14px 16px;background:white;outline:none;margin-bottom:17px}
+.search:focus,.field:focus{border-color:var(--primary)}
+.section-title{font-size:17px;font-weight:750;margin:8px 0 14px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.note{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;min-height:150px;position:relative;overflow:hidden}
+.note:active{transform:scale(.99)}
+.note-category{font-size:11px;color:var(--primary);font-weight:750;margin-bottom:12px}
+.note h3{font-size:16px;margin:0 0 8px;line-height:1.35}
+.note p{font-size:13px;line-height:1.55;color:#777386;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.note-date{font-size:10px;color:#aaa6b5;margin-top:15px}
+.empty{color:var(--muted);text-align:center;padding:50px 12px;grid-column:1/-1}
+.task-entry{display:flex;gap:8px;margin-bottom:12px}
+.field{border:1px solid var(--border);border-radius:13px;padding:13px;background:white;outline:none;width:100%;color:var(--text)}
+.add{border:0;background:var(--primary);color:white;border-radius:13px;padding:0 20px;font-size:25px}
+.task{background:white;border:1px solid var(--border);border-radius:15px;padding:15px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.check{width:24px;height:24px;border:1.5px solid var(--primary);border-radius:8px;background:white;color:white;flex-shrink:0}
+.check.done{background:var(--primary)}
+.task-name{flex:1;font-size:14px;font-weight:600}
+.task-name.done{text-decoration:line-through;color:#aaa}
+.task-date{font-size:11px;color:var(--muted);margin-top:5px}
+.delete{border:0;background:transparent;color:#aaa;font-size:22px;padding:4px 8px}
+.fab{position:fixed;bottom:25px;right:max(22px,calc((100vw - 680px)/2 + 22px));width:58px;height:58px;border:0;border-radius:20px;background:var(--primary);color:white;font-size:30px;box-shadow:0 8px 25px #7565e855}
+.modal{display:none;position:fixed;inset:0;background:var(--bg);z-index:5;padding:20px;overflow:auto}
+.modal.open{display:block}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-head button{border:0;background:transparent;color:var(--primary);font-weight:700}
+.title-input{font-size:27px;font-weight:750;border:0;background:transparent;outline:none;width:100%;padding:18px 0;color:var(--text)}
+.label{font-size:10px;letter-spacing:1px;color:var(--muted);font-weight:700;margin:16px 0 10px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{border:0;border-radius:20px;padding:9px 14px;background:#eceaf3;color:#898598;font-size:12px}
+.chip.selected{background:#e6e1ff;color:#5c4ac8;font-weight:700}
+.body-input{width:100%;height:48vh;resize:vertical;border:0;background:transparent;outline:none;font-size:16px;line-height:1.7;color:var(--text);padding-top:20px}
+.hidden{display:none!important}
+@media(max-width:390px){.app{padding:15px 13px 90px}.grid{gap:9px}.note{padding:13px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<div><div class="brand">myspace ✦</div><div class="subtitle">A calmer way to get things done.</div></div>
+<div class="avatar">P</div>
+</header>
+
+<div class="tabs">
+<button class="tab active" id="notesTab" onclick="switchTab('notes')">Notes</button>
+<button class="tab" id="tasksTab" onclick="switchTab('tasks')">Tasks</button>
+</div>
+
+<input class="search" id="search" placeholder="Search notes and tasks..." oninput="render()">
+
+<section id="notesView">
+<div class="section-title">Your notes</div>
+<div class="grid" id="notesList"></div>
+</section>
+
+<section id="tasksView" class="hidden">
+<div class="section-title">Your tasks</div>
+<div class="task-entry">
+<input class="field" id="taskInput" placeholder="Add a task..." onkeydown="if(event.key==='Enter')addTask()">
+<button class="add" onclick="addTask()">＋</button>
+</div>
+<input class="field" id="taskDate" type="date" style="margin-bottom:15px">
+<div id="tasksList"></div>
+</section>
+</div>
+
+<button class="fab" id="fab" onclick="newNote()">＋</button>
+
+<div class="modal" id="editor">
+<div class="modal-head">
+<button onclick="closeEditor()">Cancel</button>
+<strong id="editorHeading">New note</strong>
+<button onclick="saveNote()">Save</button>
+</div>
+<input class="title-input" id="noteTitle" placeholder="Title">
+<div class="label">CATEGORY</div>
+<div class="chips" id="categories"></div>
+<textarea class="body-input" id="noteBody" placeholder="Start writing..."></textarea>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let notes=JSON.parse(localStorage.getItem('ms_notes')||'[]');
+let tasks=JSON.parse(localStorage.getItem('ms_tasks')||'[]');
+let tab='notes',category='Personal',editing=null;
+const categories=['Personal','Work','Study','Ideas'];
+
+function persist(){
+ localStorage.setItem('ms_notes',JSON.stringify(notes));
+ localStorage.setItem('ms_tasks',JSON.stringify(tasks));
+}
+function esc(s=''){
+ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function switchTab(t){
+ tab=t;
+ $('notesView').classList.toggle('hidden',t!=='notes');
+ $('tasksView').classList.toggle('hidden',t!=='tasks');
+ $('notesTab').classList.toggle('active',t==='notes');
+ $('tasksTab').classList.toggle('active',t==='tasks');
+ $('fab').classList.toggle('hidden',t!=='notes');
+ $('search').value='';
+ render();
+}
+function render(){
+ const q=$('search').value.toLowerCase();
+ const filtered=notes.filter(n=>(n.title+' '+n.body+' '+n.category).toLowerCase().includes(q));
+ $('notesList').innerHTML=filtered.length?filtered.map(n=>`
+ <article class="note" onclick="editNote('${n.id}')">
+ <div class="note-category">${esc(n.category)}</div>
+ <h3>${esc(n.title)}</h3><p>${esc(n.body).slice(0,180)}</p>
+ <div class="note-date">${new Date(n.updated).toLocaleDateString()}</div>
+ </article>`).join(''):'<div class="empty">Nothing here yet. Create your first note.</div>';
+
+ const ft=tasks.filter(t=>t.title.toLowerCase().includes(q));
+ $('tasksList').innerHTML=ft.length?ft.map(t=>`
+ <div class="task">
+ <button class="check ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</button>
+ <div class="task-name ${t.done?'done':''}">${esc(t.title)}
+ ${t.date?`<div class="task-date">Due ${esc(t.date)}</div>`:''}</div>
+ <button class="delete" onclick="removeTask('${t.id}')">×</button>
+ </div>`).join(''):'<div class="empty">No tasks yet. Add one above.</div>';
+}
+function newNote(){
+ editing=null;category='Personal';$('noteTitle').value='';$('noteBody').value='';
+ $('editorHeading').textContent='New note';showEditor();
+}
+function editNote(id){
+ const n=notes.find(x=>x.id===id);if(!n)return;
+ editing=id;category=n.category;$('noteTitle').value=n.title;$('noteBody').value=n.body;
+ $('editorHeading').textContent='Edit note';showEditor();
+}
+function showEditor(){
+ $('categories').innerHTML=categories.map(c=>`<button class="chip ${category===c?'selected':''}" onclick="setCategory('${c}')">${c}</button>`).join('');
+ $('editor').classList.add('open');$('noteTitle').focus();
+}
+function setCategory(c){category=c;showEditor();}
+function closeEditor(){$('editor').classList.remove('open');}
+function saveNote(){
+ const title=$('noteTitle').value.trim();if(!title){alert('Please add a title.');return;}
+ const now=new Date().toISOString();
+ if(editing){
+  const n=notes.find(x=>x.id===editing);n.title=title;n.body=$('noteBody').value;n.category=category;n.updated=now;
+ }else{
+  notes.unshift({id:crypto.randomUUID(),title,body:$('noteBody').value,category,updated:now});
+ }
+ persist();closeEditor();render();
+}
+function addTask(){
+ const title=$('taskInput').value.trim();if(!title)return;
+ tasks.unshift({id:crypto.randomUUID(),title,date:$('taskDate').value,done:false});
+ $('taskInput').value='';$('taskDate').value='';persist();render();
+}
+function toggleTask(id){const t=tasks.find(x=>x.id===id);if(t)t.done=!t.done;persist();render();}
+function removeTask(id){if(confirm('Delete this task?')){tasks=tasks.filter(x=>x.id!==id);persist();render();}}
+render();
+</script>
+</body>
+</html>
